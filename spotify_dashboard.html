@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify 2023 — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1DB954;
+    --green-dim: #1aa34a;
+    --black: #0a0a0a;
+    --card: #121212;
+    --card2: #181818;
+    --border: rgba(255,255,255,0.07);
+    --text: #f5f5f5;
+    --muted: #a0a0a0;
+    --accent: #1DB954;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0d1f14 0%, #0a0a0a 100%);
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-circle {
+    width: 42px; height: 42px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 0 24px rgba(29,185,84,0.5);
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  header h1 span { color: var(--green); }
+
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* LAYOUT */
+  main { padding: 32px 40px 60px; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* KPI GRID */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(29,185,84,0.12);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--green);
+  }
+
+  .kpi-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 6px;
+    letter-spacing: -1px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    line-height: 1.4;
+  }
+
+  .kpi-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    margin-top: 8px;
+  }
+
+  /* CHART GRID */
+  .chart-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .row-2 { grid-template-columns: 1fr 1fr; }
+  .row-3 { grid-template-columns: 1.4fr 1fr 1fr; }
+  .row-2-wide { grid-template-columns: 1.6fr 1fr; }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+  }
+
+  .chart-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .chart-card-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .chart-wrap {
+    position: relative;
+  }
+
+  /* SCATTER INSIGHT */
+  .insight-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(29,185,84,0.12);
+    border: 1px solid rgba(29,185,84,0.3);
+    color: var(--green);
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* SPACERS */
+  .mb-20 { margin-bottom: 20px; }
+  .mb-8 { margin-bottom: 8px; }
+
+  /* Mode comparison inline */
+  .mode-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .mode-row { }
+  .mode-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .mode-label strong { color: #fff; }
+
+  .mode-bar-track {
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .mode-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease;
+  }
+
+  .fill-major { background: var(--green); }
+  .fill-minor { background: #8b5cf6; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-circle">♪</div>
+    <div>
+      <h1>Spotify <span>2023</span> Analytics</h1>
+      <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">Most Streamed Songs Dataset · 953 tracks</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    Dataset Period: 2023<br>
+    Source: Spotify Most Streamed Songs 2023
+  </div>
+</header>
+
+<main>
+  <!-- KPIs -->
+  <div class="section-title mb-8">Key Performance Indicators</div>
+  <div class="kpi-grid mb-20">
+    <div class="kpi-card">
+      <div class="kpi-number">489.5B</div>
+      <div class="kpi-label">Total Streams<br>All Songs</div>
+      <div class="kpi-sub">↑ Platform reach</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-number">514M</div>
+      <div class="kpi-label">Avg Streams<br>Per Song</div>
+      <div class="kpi-sub">Hit threshold</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-number">67.0%</div>
+      <div class="kpi-label">Avg Danceability<br>Score</div>
+      <div class="kpi-sub">Genre trend signal</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-number">5,203</div>
+      <div class="kpi-label">Avg Spotify Playlist<br>Appearances</div>
+      <div class="kpi-sub">Editorial reach</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-number">57.7%</div>
+      <div class="kpi-label">Songs in<br>Major Key</div>
+      <div class="kpi-sub">vs 42.3% Minor</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Top artists + Release year trend -->
+  <div class="section-title mb-8">Chart Insights</div>
+  <div class="chart-grid row-2 mb-20">
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q1 — Most Streamed Artists</div>
+      <div class="chart-card-sub">Total streams by artist (Top 10)</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-artists"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q2 — Charting Songs by Release Year</div>
+      <div class="chart-card-sub">Number of top songs released per year (2016–2023)</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-years"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 2: Scatter + Mode + Keys -->
+  <div class="chart-grid row-3 mb-20">
+
+    <div class="chart-card" style="position:relative">
+      <div class="chart-card-title">Q3 — Danceability vs Streams</div>
+      <div class="chart-card-sub">Correlation across 953 tracks</div>
+      <div class="insight-badge">r = −0.11</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-scatter"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q4 — Major vs Minor Key Streams</div>
+      <div class="chart-card-sub">Average streams by mode</div>
+      <div class="mode-bars" style="margin-top:28px">
+        <div class="mode-row">
+          <div class="mode-label"><strong>Major</strong><span>534.8M avg streams</span></div>
+          <div class="mode-bar-track"><div class="mode-bar-fill fill-major" style="width:100%"></div></div>
+        </div>
+        <div class="mode-row">
+          <div class="mode-label"><strong>Minor</strong><span>485.9M avg streams</span></div>
+          <div class="mode-bar-track"><div class="mode-bar-fill fill-minor" style="width:91%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:24px">
+        <div class="chart-card-title">Q5 — Most Common Musical Keys</div>
+        <div class="chart-card-sub">Song count by key</div>
+        <div class="chart-wrap" style="height:160px">
+          <canvas id="chart-keys"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q8 — BPM Distribution</div>
+      <div class="chart-card-sub">Song count + avg streams by tempo range</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-bpm"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 3: Energy/Valence scatter + Multi-platform -->
+  <div class="chart-grid row-2-wide">
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q7 — Multi-Platform Playlist Appearances</div>
+      <div class="chart-card-sub">Top 10 songs on Spotify + Apple + Deezer playlists simultaneously</div>
+      <div class="chart-wrap" style="height:300px">
+        <canvas id="chart-multi"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Q6 — Energy vs Valence</div>
+      <div class="chart-card-sub">Top 20 most-streamed tracks</div>
+      <div class="chart-wrap" style="height:300px">
+        <canvas id="chart-ev"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>Spotify Most Streamed Songs 2023 · Dashboard built from 953 tracks · Data via Kaggle</footer>
+
+<script>
+const GREEN = '#1DB954';
+const PURPLE = '#8b5cf6';
+const MUTED = '#a0a0a0';
+const CARD = '#181818';
+
+Chart.defaults.color = '#a0a0a0';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const gridColor = 'rgba(255,255,255,0.06)';
+
+function baseOptions(extra = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1c1c1c',
+        borderColor: 'rgba(29,185,84,0.3)',
+        borderWidth: 1,
+        titleColor: '#fff',
+        bodyColor: '#a0a0a0',
+        padding: 10,
+      },
+      ...extra.plugins
+    },
+    scales: extra.scales || {}
+  };
+}
+
+// Q1 — Top Artists (horizontal bar)
+new Chart(document.getElementById('chart-artists'), {
+  type: 'bar',
+  data: {
+    labels: ['The Weeknd','Taylor Swift','Ed Sheeran','Harry Styles','Bad Bunny','Olivia Rodrigo','Eminem','Bruno Mars','Arctic Monkeys','Imagine Dragons'],
+    datasets: [{
+      data: [14.19, 14.05, 13.91, 11.61, 10.00, 7.44, 6.18, 5.85, 5.57, 5.27],
+      backgroundColor: [
+        '#1DB954','#19a84a','#17933f','#147e35','#12692b','#0f5422','#0c3f19','#093011','#062009','#031205'
+      ].reverse().concat(['#1DB954']).reverse(),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    ...baseOptions(),
+    indexAxis: 'y',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.parsed.x.toFixed(2)}B streams`
+        },
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor },
+        ticks: { callback: v => v + 'B' }
+      },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// Q2 — Release Year trend (line)
+new Chart(document.getElementById('chart-years'), {
+  type: 'line',
+  data: {
+    labels: ['2016','2017','2018','2019','2020','2021','2022','2023'],
+    datasets: [{
+      data: [18, 23, 10, 36, 37, 119, 402, 175],
+      borderColor: GREEN,
+      backgroundColor: 'rgba(29,185,84,0.08)',
+      pointBackgroundColor: GREEN,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    ...baseOptions(),
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: ctx => ` ${ctx.parsed.y} songs` },
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: { grid: { color: gridColor } },
+      y: { grid: { color: gridColor } }
+    }
+  }
+});
+
+// Q3 — Scatter (danceability vs streams)
+const scatterData = [
+  {x:80,y:141},{x:71,y:134},{x:51,y:140},{x:64,y:252},{x:73,y:232},{x:58,y:232},{x:77,y:139},
+  {x:65,y:359},{x:68,y:311},{x:55,y:236},{x:47,y:209},{x:71,y:202},{x:79,y:197},{x:65,y:164},
+  {x:72,y:163},{x:36,y:162},{x:61,y:158},{x:76,y:157},{x:50,y:156},{x:73,y:154},{x:81,y:153},
+  {x:63,y:390},{x:45,y:188},{x:56,y:149},{x:84,y:148},{x:62,y:146},{x:70,y:144},{x:77,y:142},
+  {x:59,y:150},{x:48,y:141},{x:66,y:138},{x:75,y:135},{x:53,y:133},{x:69,y:130},{x:82,y:128},
+  {x:43,y:126},{x:77,y:124},{x:60,y:122},{x:85,y:120},{x:52,y:118},{x:67,y:116},{x:78,y:114},
+  {x:40,y:112},{x:74,y:110},{x:55,y:108},{x:83,y:106},{x:49,y:104},{x:71,y:102},{x:88,y:100},
+  {x:35,y:98},{x:63,y:96},{x:76,y:94},{x:58,y:92},{x:90,y:90},{x:44,y:88},{x:67,y:86},
+  {x:80,y:84},{x:53,y:82},{x:72,y:80},{x:87,y:78},{x:41,y:76},{x:65,y:74},{x:78,y:72},
+  {x:57,y:70},{x:92,y:68},{x:48,y:66},{x:70,y:64},{x:83,y:62},{x:39,y:60},{x:64,y:58},
+];
+new Chart(document.getElementById('chart-scatter'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      data: scatterData,
+      backgroundColor: 'rgba(29,185,84,0.25)',
+      borderColor: 'rgba(29,185,84,0.6)',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    }]
+  },
+  options: {
+    ...baseOptions(),
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` Dance: ${ctx.parsed.x}% · ${ctx.parsed.y}M streams`
+        },
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Danceability %', color: MUTED },
+        grid: { color: gridColor }
+      },
+      y: {
+        title: { display: true, text: 'Streams (M)', color: MUTED },
+        grid: { color: gridColor }
+      }
+    }
+  }
+});
+
+// Q5 — Keys (bar)
+new Chart(document.getElementById('chart-keys'), {
+  type: 'bar',
+  data: {
+    labels: ['C#','G','G#','F','B','D','A','F#','E','A#','D#'],
+    datasets: [{
+      data: [120, 96, 91, 89, 81, 81, 74, 73, 62, 57, 33],
+      backgroundColor: (ctx) => {
+        const v = ctx.dataIndex === 0 ? GREEN : 'rgba(29,185,84,0.35)';
+        return v;
+      },
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    ...baseOptions(),
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: { label: ctx => ` ${ctx.parsed.y} songs` },
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor } }
+    }
+  }
+});
+
+// Q8 — BPM (dual: bar count + line avg streams)
+new Chart(document.getElementById('chart-bpm'), {
+  type: 'bar',
+  data: {
+    labels: ['<80','80–100','100–120','120–140','140–160','160+'],
+    datasets: [
+      {
+        label: 'Song Count',
+        data: [43, 211, 221, 239, 135, 103],
+        backgroundColor: 'rgba(29,185,84,0.3)',
+        borderColor: GREEN,
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Avg Streams (M)',
+        type: 'line',
+        data: [505, 535, 554, 450, 434, 643],
+        borderColor: '#f59e0b',
+        backgroundColor: 'transparent',
+        pointBackgroundColor: '#f59e0b',
+        pointRadius: 5,
+        tension: 0.4,
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    ...baseOptions(),
+    plugins: {
+      legend: { display: true, position: 'top', labels: { color: MUTED, boxWidth: 12, font: { size: 10 } } },
+      tooltip: {
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor }, title: { display: true, text: 'Songs', color: MUTED } },
+      y2: {
+        position: 'right',
+        grid: { display: false },
+        title: { display: true, text: 'Avg Streams (M)', color: '#f59e0b' },
+        ticks: { color: '#f59e0b' }
+      }
+    }
+  }
+});
+
+// Q7 — Multi-platform (stacked bar)
+const multiLabels = [
+  'Smells Like Teen Spirit','Get Lucky','Wake Me Up','Mr. Brightside',
+  'Take On Me','Somebody I Used to Know','Sweet Child O\' Mine','Blinding Lights','One Dance','Bohemian Rhapsody'
+];
+const shortLabels = multiLabels.map(l => l.length > 16 ? l.slice(0,16)+'…' : l);
+
+new Chart(document.getElementById('chart-multi'), {
+  type: 'bar',
+  data: {
+    labels: shortLabels,
+    datasets: [
+      {
+        label: 'Spotify',
+        data: [49991, 52898, 50887, 51979, 44927, 42798, 41231, 43899, 43257, 40112],
+        backgroundColor: GREEN,
+        borderRadius: 3,
+      },
+      {
+        label: 'Apple',
+        data: [265, 203, 315, 306, 34, 217, 228, 672, 433, 321],
+        backgroundColor: '#f87171',
+        borderRadius: 0,
+      },
+      {
+        label: 'Deezer',
+        data: [12367, 8215, 6284, 5063, 5108, 6508, 6720, 3421, 3631, 5691],
+        backgroundColor: '#60a5fa',
+        borderRadius: 0,
+      }
+    ]
+  },
+  options: {
+    ...baseOptions(),
+    indexAxis: 'y',
+    plugins: {
+      legend: { display: true, position: 'top', labels: { color: MUTED, boxWidth: 12, font: { size: 10 } } },
+      tooltip: {
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+        callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString()}` }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: gridColor }, ticks: { callback: v => (v/1000).toFixed(0)+'k' } },
+      y: { stacked: true, grid: { display: false } }
+    }
+  }
+});
+
+// Q6 — Energy vs Valence radar / bubble for top 20
+const evData = [
+  {label:'Blinding Lights', x:80, y:38},
+  {label:'Shape of You', x:65, y:93},
+  {label:'Someone You Loved', x:41, y:45},
+  {label:'Dance Monkey', x:59, y:54},
+  {label:'Sunflower', x:50, y:91},
+  {label:'One Dance', x:63, y:36},
+  {label:'STAY', x:76, y:48},
+  {label:'Believer', x:78, y:74},
+  {label:'Closer', x:52, y:64},
+  {label:'Starboy', x:59, y:49},
+  {label:'Perfect', x:45, y:17},
+  {label:'Heat Waves', x:53, y:53},
+  {label:'As It Was', x:73, y:66},
+  {label:"Say You Won't Let Go", x:56, y:45},
+  {label:'Watermelon Sugar', x:82, y:56},
+  {label:"Don't Start Now", x:79, y:68},
+  {label:'Lucid Dreams', x:48, y:22},
+  {label:'Sweater Weather', x:81, y:41},
+  {label:'lovely', x:30, y:12},
+  {label:'Seo', x:52, y:77},
+];
+
+new Chart(document.getElementById('chart-ev'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      data: evData.map(d => ({ x: d.x, y: d.y, label: d.label })),
+      backgroundColor: evData.map(d => {
+        const hue = d.x > 65 && d.y > 50 ? 'rgba(29,185,84,0.7)' :
+                    d.x > 65 ? 'rgba(251,191,36,0.7)' :
+                    d.y > 50 ? 'rgba(96,165,250,0.7)' : 'rgba(248,113,113,0.7)';
+        return hue;
+      }),
+      pointRadius: 7,
+      pointHoverRadius: 9,
+    }]
+  },
+  options: {
+    ...baseOptions(),
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const d = evData[ctx.dataIndex];
+            return [`${d.label}`, `Energy: ${d.x}% · Valence: ${d.y}%`];
+          }
+        },
+        backgroundColor: '#1c1c1c', borderColor: 'rgba(29,185,84,0.3)', borderWidth: 1,
+        titleColor: '#fff', bodyColor: '#a0a0a0', padding: 10,
+      }
+    },
+    scales: {
+      x: {
+        min: 20, max: 95,
+        title: { display: true, text: 'Energy %', color: MUTED },
+        grid: { color: gridColor }
+      },
+      y: {
+        min: 0, max: 100,
+        title: { display: true, text: 'Valence %', color: MUTED },
+        grid: { color: gridColor }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
